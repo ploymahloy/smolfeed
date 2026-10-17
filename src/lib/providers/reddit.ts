@@ -153,6 +153,7 @@ export async function fetchReddit(account: Account): Promise<FetchBucket> {
           badge: "Reddit",
           sourceKey,
           sourceLabel,
+          imageKey: sourceKey,
           authorName: post.subreddit ? `r/${post.subreddit}` : "Reddit",
           authorHandle: post.author || fresh.handle,
           text,

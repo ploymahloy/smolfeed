@@ -1,11 +1,20 @@
 import { formatWhen } from "@/lib/text";
 import type { Post } from "@/lib/types";
 
-export function PostCard({ post }: { post: Post }) {
+type PostCardProps = {
+  post: Post;
+  showMedia?: boolean;
+};
+
+export const PostCard = ({ post, showMedia = false }: PostCardProps) => {
   const when = formatWhen(post.createdAt);
   return (
-    <article
+    <a
       className="card"
+      href={post.url}
+      target="_blank"
+      rel="noreferrer"
+      aria-label={`Open post by ${post.authorName} on ${post.badge}`}
       data-provider={post.provider}
       data-source-key={post.sourceKey}
       data-source-label={post.sourceLabel}
@@ -24,7 +33,7 @@ export function PostCard({ post }: { post: Post }) {
         ) : null}
       </p>
       {post.text ? <p className="card-text">{post.text}</p> : null}
-      {post.mediaUrls.length > 0 ? (
+      {showMedia && post.mediaUrls.length > 0 ? (
         <div className={post.mediaUrls.length > 1 ? "media grid" : "media"}>
           {post.mediaUrls.map((url) => (
             // Remote feeds use arbitrary image hosts, so a plain img keeps them visible.
@@ -33,9 +42,6 @@ export function PostCard({ post }: { post: Post }) {
           ))}
         </div>
       ) : null}
-      <a className="open" href={post.url} target="_blank" rel="noreferrer">
-        Open
-      </a>
-    </article>
+    </a>
   );
-}
+};

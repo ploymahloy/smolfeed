@@ -3,6 +3,7 @@ import { mkdirSync } from "node:fs";
 import path from "node:path";
 import { decryptString, encryptString } from "@/lib/crypto";
 import { parseLimitMinutes } from "@/lib/limits";
+import { IMAGE_KEY } from "@/lib/types";
 import type {
   Account,
   AppSettings,
@@ -402,13 +403,28 @@ export function getSettings(): AppSettings {
     sessionLimitMinutes: parseLimitMinutes(map.get("session_limit_minutes")),
     deterEnabled: map.get("deter_enabled") === "1",
     sourceLimits,
+    imageSources: parseImageSources(map.get("image_sources")),
   };
 }
+
+const parseImageSources = (raw: string | undefined): string[] => {
+  if (!raw) return [];
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(
+      (key): key is string => typeof key === "string" && IMAGE_KEY.test(key),
+    );
+  } catch {
+    return [];
+  }
+};
 
 export function saveSettings(patch: {
   sessionLimitMinutes?: number | null;
   deterEnabled?: boolean;
   sourceLimits?: { sourceKey: string; limitMinutes: number | null }[];
+  imageSources?: string[];
 }): AppSettings {
   const db = getDb();
   const write = db.transaction(() => {
@@ -429,6 +445,12 @@ export function saveSettings(patch: {
         `INSERT INTO settings (key, value) VALUES (?, ?)
          ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
       ).run("deter_enabled", patch.deterEnabled ? "1" : "0");
+    }
+    if (patch.imageSources) {
+      db.prepare(
+        `INSERT INTO settings (key, value) VALUES (?, ?)
+         ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+      ).run("image_sources", JSON.stringify([...new Set(patch.imageSources)]));
     }
     if (patch.sourceLimits) {
       const upsert = db.prepare(

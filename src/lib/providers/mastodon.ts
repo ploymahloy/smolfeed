@@ -202,6 +202,7 @@ export async function fetchMastodon(account: Account): Promise<FetchBucket> {
           badge: "Mastodon",
           sourceKey,
           sourceLabel,
+          imageKey: sourceKey,
           authorName: author?.display_name || author?.acct || "Mastodon",
           authorHandle: author?.acct || fresh.handle,
           text: clip(stripHtml(inner.content || ""), 600),

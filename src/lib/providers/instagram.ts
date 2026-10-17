@@ -174,6 +174,7 @@ export async function fetchInstagram(account: Account): Promise<FetchBucket> {
       badge: "Instagram",
       sourceKey,
       sourceLabel: LABEL,
+      imageKey: sourceKey,
       authorName: fresh.displayName,
       authorHandle: item.username || fresh.handle,
       text: clip(item.caption || ""),

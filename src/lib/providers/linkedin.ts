@@ -161,11 +161,14 @@ export async function fetchLinkedIn(account: Account): Promise<FetchBucket> {
         badge: "LinkedIn",
         sourceKey,
         sourceLabel: LABEL,
+        imageKey: sourceKey,
         authorName: fresh.displayName,
         authorHandle: fresh.handle,
         text: clip(item.commentary || ""),
         mediaUrls: [],
-        url: "https://www.linkedin.com/feed/",
+        url: item.id?.startsWith("urn:li:")
+          ? `https://www.linkedin.com/feed/update/${encodeURIComponent(item.id)}/`
+          : "https://www.linkedin.com/feed/",
         createdAt: item.publishedAt
           ? new Date(item.publishedAt).toISOString()
           : null,

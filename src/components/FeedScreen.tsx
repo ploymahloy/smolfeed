@@ -1,10 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { PostCard } from "@/components/PostCard";
+import { PostCardSkeleton } from "@/components/PostCardSkeleton";
 import { useSession } from "@/components/SessionProvider";
 import type { Post, SourceNotice } from "@/lib/types";
+
+const AWAY_FROM_TOP_PX = 300;
 
 type FeedPayload = {
   posts: Post[];
@@ -12,7 +15,7 @@ type FeedPayload = {
 };
 
 export function FeedScreen() {
-  const { paused, cappedKeys, startNewSession } = useSession();
+  const { paused, cappedKeys, startNewSession, settings, showImages } = useSession();
   const [feed, setFeed] = useState<FeedPayload | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -36,6 +39,24 @@ export function FeedScreen() {
     void load();
   }, [load]);
 
+  // Refresh when the reader scrolls away from the top and then returns to it.
+  const loadingRef = useRef(true);
+  loadingRef.current = loading;
+  useEffect(() => {
+    if (paused) return;
+    let armed = false;
+    const onScroll = () => {
+      if (window.scrollY > AWAY_FROM_TOP_PX) {
+        armed = true;
+      } else if (window.scrollY <= 0 && armed) {
+        armed = false;
+        if (!loadingRef.current) void load();
+      }
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [paused, load]);
+
   const posts = feed?.posts ?? [];
   const notices = feed?.notices ?? [];
   const capped = new Set(cappedKeys);
@@ -54,11 +75,11 @@ export function FeedScreen() {
           <h1>Feed</h1>
           <p>Sources woven together, without a ranking.</p>
         </div>
-        {paused ? null : (
-          <button type="button" className="button ghost" onClick={() => void load()} disabled={loading}>
-            Refresh
-          </button>
-        )}
+        {!paused && loading && feed ? (
+          <p className="status" role="status">
+            Refreshing…
+          </p>
+        ) : null}
       </header>
 
       {error ? <p className="banner error">{error}</p> : null}
@@ -82,7 +103,14 @@ export function FeedScreen() {
           </button>
         </section>
       ) : loading && !feed ? (
-        <p className="status">Gathering the weave…</p>
+        <div className="feed" aria-busy="true">
+          <p className="sr-only" role="status">
+            Loading feed
+          </p>
+          {Array.from({ length: 3 }, (_, index) => (
+            <PostCardSkeleton key={index} />
+          ))}
+        </div>
       ) : visiblePosts.length === 0 ? (
         <section className="empty">
           <h2>Nothing in the weave yet</h2>
@@ -94,7 +122,11 @@ export function FeedScreen() {
       ) : (
         <div className="feed">
           {visiblePosts.map((post) => (
-            <PostCard key={post.id} post={post} />
+            <PostCard
+              key={post.id}
+              post={post}
+              showMedia={showImages && settings.imageSources.includes(post.imageKey)}
+            />
           ))}
         </div>
       )}

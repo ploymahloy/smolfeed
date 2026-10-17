@@ -151,6 +151,7 @@ export async function fetchX(account: Account): Promise<FetchBucket> {
         badge: "X",
         sourceKey,
         sourceLabel,
+        imageKey: sourceKey,
         authorName: author?.name || fresh.displayName,
         authorHandle: author?.username || fresh.handle,
         text: clip(tweet.text || ""),

@@ -155,6 +155,7 @@ export async function fetchBluesky(account: Account): Promise<FetchBucket> {
         badge: "Bluesky",
         sourceKey,
         sourceLabel,
+        imageKey: sourceKey,
         authorName: author.displayName || author.handle,
         authorHandle: author.handle,
         text: clip(record.text),

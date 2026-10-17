@@ -1,5 +1,5 @@
 import { XMLParser } from "fast-xml-parser";
-import { categorySourceKey, type Category, type FetchBucket, type Post, type RssFeed } from "@/lib/types";
+import { categorySourceKey, feedImageKey, type Category, type FetchBucket, type Post, type RssFeed } from "@/lib/types";
 import { clip, errorMessage, stripHtml, textOf } from "@/lib/text";
 import { fetchWithTimeout } from "@/lib/providers/http";
 
@@ -92,10 +92,15 @@ export async function fetchRss(feed: RssFeed, category: Category): Promise<Fetch
       const title = textOf(entry.title);
       const summary = stripHtml(
         textOf(entry.description) ||
-          textOf(entry.summary) ||
-          textOf(entry["content:encoded"]) ||
-          textOf(entry.content),
-      );
+        textOf(entry.summary) ||
+        textOf(entry["content:encoded"]) ||
+        textOf(entry.content),
+      )
+        // Some feeds (e.g. Hacker News) pad summaries with link and score
+        // metadata; keep only the real summary text.
+        .replace(/^[ \t]*(Article URL|Comments URL|Points|#\s*Comments):.*$/gim, "")
+        .replace(/\n{3,}/g, "\n\n")
+        .trim();
       const text = clip([title, summary].filter(Boolean).join("\n\n"), 600);
       const url = linkFrom(entry) || feed.url;
       const id = textOf(entry.guid) || textOf(entry.id) || `${feed.id}:${index}:${url}`;
@@ -105,6 +110,7 @@ export async function fetchRss(feed: RssFeed, category: Category): Promise<Fetch
         badge: badgeFor(category.kind),
         sourceKey,
         sourceLabel,
+        imageKey: feedImageKey(feed.id),
         authorName: parsed.title || feed.title || host,
         authorHandle: host,
         text,

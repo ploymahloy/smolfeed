@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSettings, saveSettings } from "@/lib/db";
 import { parseLimitMinutes } from "@/lib/limits";
+import { IMAGE_KEY } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -15,12 +16,28 @@ export async function PUT(request: Request): Promise<NextResponse> {
     sessionLimitMinutes?: unknown;
     deterEnabled?: unknown;
     sourceLimits?: unknown;
+    imageSources?: unknown;
   };
   const patch: {
     sessionLimitMinutes?: number | null;
     deterEnabled?: boolean;
     sourceLimits?: { sourceKey: string; limitMinutes: number | null }[];
+    imageSources?: string[];
   } = {};
+
+  if ("imageSources" in body) {
+    const { imageSources } = body;
+    if (
+      !Array.isArray(imageSources) ||
+      !imageSources.every((key) => typeof key === "string" && IMAGE_KEY.test(key))
+    ) {
+      return NextResponse.json(
+        { error: "Image sources must be a list of valid sources" },
+        { status: 400 },
+      );
+    }
+    patch.imageSources = imageSources;
+  }
 
   if ("sessionLimitMinutes" in body) {
     if (body.sessionLimitMinutes == null || body.sessionLimitMinutes === "") {
