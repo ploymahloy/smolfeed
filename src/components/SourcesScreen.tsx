@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useSession } from "@/components/SessionProvider";
-import { accountSourceKey, categorySourceKey, type AppSettings, type Category, type PublicAccount, type SocialProviderId } from "@/lib/types";
+import type { AppSettings, Category, PublicAccount, SocialProviderId } from "@/lib/types";
 
 type ProviderRow = {
   id: SocialProviderId;
@@ -21,12 +21,6 @@ type SourcesPayload = {
   settings: AppSettings;
 };
 
-type LimitRow = {
-  sourceKey: string;
-  label: string;
-  group: string;
-};
-
 const PROVIDER_NAMES: Record<string, string> = {
   instagram: "Instagram",
   x: "X",
@@ -35,27 +29,6 @@ const PROVIDER_NAMES: Record<string, string> = {
   bluesky: "Bluesky",
   mastodon: "Mastodon",
 };
-
-function limitRows(data: SourcesPayload): LimitRow[] {
-  const rows: LimitRow[] = [];
-  for (const provider of data.providers) {
-    for (const account of provider.accounts) {
-      rows.push({
-        sourceKey: accountSourceKey(account.id),
-        label: account.handle || account.displayName,
-        group: provider.label,
-      });
-    }
-  }
-  for (const category of data.categories) {
-    rows.push({
-      sourceKey: categorySourceKey(category.id),
-      label: category.name,
-      group: category.kind,
-    });
-  }
-  return rows;
-}
 
 export function SourcesScreen() {
   const params = useSearchParams();
@@ -68,8 +41,6 @@ export function SourcesScreen() {
   const [kind, setKind] = useState<Category["kind"]>("news");
   const [urls, setUrls] = useState("");
   const [handles, setHandles] = useState<Record<string, string>>({});
-  const [sessionInput, setSessionInput] = useState("");
-  const [limitInputs, setLimitInputs] = useState<Record<string, string>>({});
 
   const connected = params.get("connected");
 
@@ -77,17 +48,6 @@ export function SourcesScreen() {
     (payload: SourcesPayload) => {
       setData(payload);
       applySettings(payload.settings);
-      setSessionInput(
-        payload.settings.sessionLimitMinutes == null
-          ? ""
-          : String(payload.settings.sessionLimitMinutes),
-      );
-      const next: Record<string, string> = {};
-      for (const row of limitRows(payload)) {
-        const minutes = payload.settings.sourceLimits[row.sourceKey];
-        next[row.sourceKey] = minutes ? String(minutes) : "";
-      }
-      setLimitInputs(next);
     },
     [applySettings],
   );
@@ -173,60 +133,12 @@ export function SourcesScreen() {
     await load();
   }
 
-  async function saveLimits(event: React.FormEvent) {
-    event.preventDefault();
-    if (!data) return;
-    setError("");
-    setNotice("");
-    const sessionLimitMinutes = sessionInput.trim() === "" ? null : Number(sessionInput);
-    if (
-      sessionLimitMinutes != null &&
-      (!Number.isInteger(sessionLimitMinutes) || sessionLimitMinutes < 1 || sessionLimitMinutes > 1440)
-    ) {
-      setError("Session limit must be a whole number of minutes from 1 to 1440");
-      return;
-    }
-    const sourceLimits = limitRows(data).map((row) => {
-      const raw = (limitInputs[row.sourceKey] ?? "").trim();
-      return {
-        sourceKey: row.sourceKey,
-        limitMinutes: raw === "" ? null : Number(raw),
-      };
-    });
-    if (
-      sourceLimits.some(
-        (limit) =>
-          limit.limitMinutes != null &&
-          (!Number.isInteger(limit.limitMinutes) ||
-            limit.limitMinutes < 1 ||
-            limit.limitMinutes > 1440),
-      )
-    ) {
-      setError("Each source limit must be a whole number of minutes from 1 to 1440");
-      return;
-    }
-    const response = await fetch("/api/settings", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ sessionLimitMinutes, sourceLimits }),
-    });
-    const body = (await response.json()) as AppSettings & { error?: string };
-    if (!response.ok) {
-      setError(body.error || "Limits could not be saved");
-      return;
-    }
-    applySettings(body);
-    setNotice("Limits saved.");
-  }
-
-  const rows = data ? limitRows(data) : [];
-
   return (
     <div className="column wide">
       <header className="page-head">
         <div>
           <h1>Sources</h1>
-          <p>Connect accounts, add feeds, and set how long each one stays in the session.</p>
+          <p>Connect accounts and add feeds.</p>
         </div>
       </header>
 
@@ -310,7 +222,7 @@ export function SourcesScreen() {
 
       <section className="panel">
         <h2>Categories</h2>
-        <p className="lede">News, industry, or any other RSS or Atom feed. Each feed is its own strand in the weave, and the category shares one time limit.</p>
+        <p className="lede">News, industry, or any other RSS or Atom feed. Each feed is its own strand in the weave.</p>
         <form className="stack-form" onSubmit={(event) => void addCategory(event)}>
           <label>
             Name
@@ -356,41 +268,6 @@ export function SourcesScreen() {
             </li>
           ))}
         </ul>
-      </section>
-
-      <section className="panel">
-        <h2>Screen time</h2>
-        <p className="lede">Leave a field empty for no cap. A session cap replaces the feed with a pause screen. A source cap drops that source for the rest of the session.</p>
-        <form className="stack-form" onSubmit={(event) => void saveLimits(event)}>
-          <label>
-            Session minutes
-            <input
-              inputMode="numeric"
-              value={sessionInput}
-              onChange={(event) => setSessionInput(event.target.value)}
-              placeholder="No cap"
-            />
-          </label>
-          {rows.map((row) => (
-            <label key={row.sourceKey}>
-              {row.group}: {row.label}
-              <input
-                inputMode="numeric"
-                value={limitInputs[row.sourceKey] ?? ""}
-                onChange={(event) =>
-                  setLimitInputs((current) => ({
-                    ...current,
-                    [row.sourceKey]: event.target.value,
-                  }))
-                }
-                placeholder="No cap"
-              />
-            </label>
-          ))}
-          <button type="submit" className="button">
-            Save limits
-          </button>
-        </form>
       </section>
     </div>
   );
