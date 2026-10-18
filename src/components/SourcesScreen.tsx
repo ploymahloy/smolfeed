@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useSession } from "@/components/SessionProvider";
-import { accountSourceKey, categorySourceKey, feedImageKey, type AppSettings, type Category, type PublicAccount, type SocialProviderId } from "@/lib/types";
+import { accountSourceKey, categorySourceKey, type AppSettings, type Category, type PublicAccount, type SocialProviderId } from "@/lib/types";
 
 type ProviderRow = {
   id: SocialProviderId;
@@ -26,29 +26,6 @@ type LimitRow = {
   label: string;
   group: string;
 };
-
-type ImageRow = {
-  imageKey: string;
-  label: string;
-  group: string;
-};
-
-const imageRows = (data: SourcesPayload): ImageRow[] => [
-  ...data.providers.flatMap((provider) =>
-    provider.accounts.map((account) => ({
-      imageKey: accountSourceKey(account.id),
-      label: account.handle || account.displayName,
-      group: provider.label,
-    })),
-  ),
-  ...data.categories.flatMap((category) =>
-    category.feeds.map((feed) => ({
-      imageKey: feedImageKey(feed.id),
-      label: feed.title || feed.url,
-      group: category.name,
-    })),
-  ),
-];
 
 const PROVIDER_NAMES: Record<string, string> = {
   instagram: "Instagram",
@@ -82,8 +59,7 @@ function limitRows(data: SourcesPayload): LimitRow[] {
 
 export function SourcesScreen() {
   const params = useSearchParams();
-  const { applySettings, settings } = useSession();
-  const [imageSaving, setImageSaving] = useState(false);
+  const { applySettings } = useSession();
   const [data, setData] = useState<SourcesPayload | null>(null);
   const [error, setError] = useState(params.get("error") ?? "");
   const [notice, setNotice] = useState("");
@@ -243,30 +219,7 @@ export function SourcesScreen() {
     setNotice("Limits saved.");
   }
 
-  const toggleImages = async (imageKey: string, enabled: boolean) => {
-    setError("");
-    setImageSaving(true);
-    const imageSources = enabled
-      ? [...new Set([...settings.imageSources, imageKey])]
-      : settings.imageSources.filter((key) => key !== imageKey);
-    try {
-      const response = await fetch("/api/settings", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imageSources }),
-      });
-      const body = (await response.json()) as AppSettings & { error?: string };
-      if (!response.ok) throw new Error(body.error || "Image setting could not be saved");
-      applySettings(body);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Image setting could not be saved");
-    } finally {
-      setImageSaving(false);
-    }
-  };
-
   const rows = data ? limitRows(data) : [];
-  const imageSwitchRows = data ? imageRows(data) : [];
 
   return (
     <div className="column wide">
@@ -403,38 +356,6 @@ export function SourcesScreen() {
             </li>
           ))}
         </ul>
-      </section>
-
-      <section className="panel">
-        <h2>Images</h2>
-        <p className="lede">
-          Every source starts with images off. Switch one on to show its images when the feed&apos;s image button is on.
-        </p>
-        {imageSwitchRows.length === 0 ? (
-          <p className="lede">Connect an account or add a feed to choose its images.</p>
-        ) : (
-          <ul className="switch-list">
-            {imageSwitchRows.map((row) => {
-              const enabled = settings.imageSources.includes(row.imageKey);
-              return (
-                <li key={row.imageKey} className="switch-row">
-                  <span id={`image-label-${row.imageKey}`}>
-                    <span className="kind">{row.group}</span> {row.label}
-                  </span>
-                  <button
-                    type="button"
-                    role="switch"
-                    className="switch"
-                    aria-checked={enabled}
-                    aria-labelledby={`image-label-${row.imageKey}`}
-                    disabled={imageSaving}
-                    onClick={() => void toggleImages(row.imageKey, !enabled)}
-                  />
-                </li>
-              );
-            })}
-          </ul>
-        )}
       </section>
 
       <section className="panel">

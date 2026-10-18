@@ -16,11 +16,9 @@ export type Post = {
   badge: string;
   sourceKey: string;
   sourceLabel: string;
-  imageKey: string;
   authorName: string;
   authorHandle: string;
   text: string;
-  mediaUrls: string[];
   url: string;
   createdAt: string | null;
 };
@@ -72,7 +70,6 @@ export type Category = {
 export type AppSettings = {
   sessionLimitMinutes: number | null;
   sourceLimits: Record<string, number>;
-  imageSources: string[];
 };
 
 export type FetchBucket = {
@@ -98,10 +95,6 @@ export function isCategoryKind(value: string): value is CategoryKind {
 export function accountSourceKey(accountId: string): string {
   return `account:${accountId}`;
 }
-
-export const feedImageKey = (feedId: string): string => `feed:${feedId}`;
-
-export const IMAGE_KEY = /^(account|feed):[0-9a-f-]{36}$/i;
 
 export function categorySourceKey(categoryId: string): string {
   return `category:${categoryId}`;

@@ -26,9 +26,7 @@ type Status = {
   url?: string;
   content?: string;
   created_at?: string;
-  sensitive?: boolean;
   account?: { display_name?: string; acct?: string };
-  media_attachments?: { type?: string; url?: string; preview_url?: string }[];
   reblog?: Status | null;
 };
 
@@ -147,15 +145,6 @@ export async function mastodonFinish(code: string, state: string): Promise<void>
   });
 }
 
-function statusMedia(status: Status): string[] {
-  if (status.sensitive) return [];
-  return (status.media_attachments ?? [])
-    .filter((item) => item.type === "image")
-    .map((item) => item.url || item.preview_url)
-    .filter((url): url is string => Boolean(url))
-    .slice(0, 4);
-}
-
 export async function fetchMastodon(account: Account): Promise<FetchBucket> {
   const sourceKey = accountSourceKey(account.id);
   const sourceLabel = account.handle || "Mastodon";
@@ -202,11 +191,9 @@ export async function fetchMastodon(account: Account): Promise<FetchBucket> {
           badge: "Mastodon",
           sourceKey,
           sourceLabel,
-          imageKey: sourceKey,
           authorName: author?.display_name || author?.acct || "Mastodon",
           authorHandle: author?.acct || fresh.handle,
           text: clip(stripHtml(inner.content || ""), 600),
-          mediaUrls: statusMedia(inner),
           url: inner.url || status.url || instanceUrl,
           createdAt: inner.created_at ?? status.created_at ?? null,
         };

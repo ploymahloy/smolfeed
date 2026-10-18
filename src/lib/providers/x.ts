@@ -17,13 +17,11 @@ import {
 import { ensureFreshToken, pkcePair } from "@/lib/providers/oauth";
 
 type XUser = { id?: string; name?: string; username?: string };
-type XMedia = { media_key?: string; url?: string; preview_image_url?: string };
 type XTweet = {
   id?: string;
   text?: string;
   created_at?: string;
   author_id?: string;
-  attachments?: { media_keys?: string[] };
 };
 
 function xAuthHeader(): string {
@@ -117,16 +115,15 @@ export async function fetchX(account: Account): Promise<FetchBucket> {
       `https://api.x.com/2/users/${fresh.externalId}/timelines/reverse_chronological`,
     );
     timeline.searchParams.set("max_results", "20");
-    timeline.searchParams.set("tweet.fields", "created_at,attachments,author_id");
-    timeline.searchParams.set("expansions", "author_id,attachments.media_keys");
+    timeline.searchParams.set("tweet.fields", "created_at,author_id");
+    timeline.searchParams.set("expansions", "author_id");
     timeline.searchParams.set("user.fields", "name,username");
-    timeline.searchParams.set("media.fields", "url,preview_image_url,type");
     const response = await fetchWithTimeout(timeline.toString(), {
       headers: { Authorization: `Bearer ${fresh.accessToken}` },
     });
     const body = await readJson<{
       data?: XTweet[];
-      includes?: { users?: XUser[]; media?: XMedia[] };
+      includes?: { users?: XUser[] };
       title?: string;
       detail?: string;
     }>(response);
@@ -136,26 +133,17 @@ export async function fetchX(account: Account): Promise<FetchBucket> {
     const users = new Map(
       (body.includes?.users ?? []).map((user) => [user.id, user]),
     );
-    const media = new Map(
-      (body.includes?.media ?? []).map((item) => [item.media_key, item]),
-    );
     const posts: Post[] = (body.data ?? []).slice(0, 20).map((tweet) => {
       const author = users.get(tweet.author_id);
-      const mediaUrls = (tweet.attachments?.media_keys ?? [])
-        .map((key) => media.get(key))
-        .map((item) => item?.url || item?.preview_image_url)
-        .filter((url): url is string => Boolean(url));
       return {
         id: `x:${tweet.id ?? crypto.randomUUID()}`,
         provider: "x",
         badge: "X",
         sourceKey,
         sourceLabel,
-        imageKey: sourceKey,
         authorName: author?.name || fresh.displayName,
         authorHandle: author?.username || fresh.handle,
         text: clip(tweet.text || ""),
-        mediaUrls,
         url: tweet.id ? `https://x.com/i/status/${tweet.id}` : "https://x.com",
         createdAt: tweet.created_at ?? null,
       };

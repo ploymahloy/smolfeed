@@ -14,23 +14,6 @@ const LINKS = [
 
 const MOBILE_QUERY = "(max-width: 760px)";
 
-const ImageIcon = ({ crossed }: { crossed: boolean }) => (
-  <svg
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    aria-hidden="true"
-  >
-    <rect x="3" y="4" width="18" height="16" rx="2" />
-    <circle cx="9" cy="10" r="1.5" />
-    <path d="m21 16-5-5-9 9" />
-    {crossed ? <path d="M3 3l18 18" /> : null}
-  </svg>
-);
-
 const MenuIcon = ({ open }: { open: boolean }) => (
   <svg
     viewBox="0 0 24 24"
@@ -46,7 +29,7 @@ const MenuIcon = ({ open }: { open: boolean }) => (
 
 export function Navbar() {
   const pathname = usePathname();
-  const { ready, elapsedMs, settings, showImages, toggleImages } = useSession();
+  const { ready, elapsedMs, settings } = useSession();
   const [isMenuOpen, setMenuOpen] = useState(false);
   // Slide transitions run only around a user toggle. Without this, the closed
   // drawer animates out whenever the mobile styles first apply (late CSS, or the
@@ -124,19 +107,6 @@ export function Navbar() {
         <p className="clock nav-tools-clock" aria-label={`Session time ${clock}`}>
           {clock}
         </p>
-        <button
-          type="button"
-          className={showImages ? "nav-btn icon on" : "nav-btn icon"}
-          aria-pressed={showImages}
-          aria-describedby="images-hint"
-          aria-label="Show images"
-          onClick={toggleImages}
-        >
-          <ImageIcon crossed={!showImages} />
-        </button>
-        <span id="images-hint" className="sr-only">
-          Shows images for the sources switched on in Sources settings. Off by default.
-        </span>
       </div>
     </header>
   );

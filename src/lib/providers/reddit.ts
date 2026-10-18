@@ -25,7 +25,6 @@ type RedditPost = {
   author?: string;
   permalink?: string;
   url?: string;
-  thumbnail?: string;
   created_utc?: number;
   subreddit?: string;
 };
@@ -105,11 +104,6 @@ export async function redditFinish(code: string, state: string): Promise<void> {
   });
 }
 
-function thumbnail(post: RedditPost): string[] {
-  if (post.thumbnail && post.thumbnail.startsWith("http")) return [post.thumbnail];
-  return [];
-}
-
 export async function fetchReddit(account: Account): Promise<FetchBucket> {
   const sourceKey = accountSourceKey(account.id);
   const sourceLabel = account.handle ? `u/${account.handle}` : "Reddit";
@@ -153,11 +147,9 @@ export async function fetchReddit(account: Account): Promise<FetchBucket> {
           badge: "Reddit",
           sourceKey,
           sourceLabel,
-          imageKey: sourceKey,
           authorName: post.subreddit ? `r/${post.subreddit}` : "Reddit",
           authorHandle: post.author || fresh.handle,
           text,
-          mediaUrls: thumbnail(post),
           url: post.permalink
             ? `https://www.reddit.com${post.permalink}`
             : "https://www.reddit.com",

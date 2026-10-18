@@ -20,8 +20,6 @@ const LABEL = "Your Instagram posts";
 type MediaItem = {
   id?: string;
   caption?: string;
-  media_url?: string;
-  thumbnail_url?: string;
   permalink?: string;
   timestamp?: string;
   username?: string;
@@ -139,11 +137,6 @@ async function refreshInstagram(
   );
 }
 
-function mediaUrl(item: MediaItem): string[] {
-  const url = item.media_url || item.thumbnail_url;
-  return url ? [url] : [];
-}
-
 export async function fetchInstagram(account: Account): Promise<FetchBucket> {
   const sourceKey = accountSourceKey(account.id);
   try {
@@ -155,8 +148,7 @@ export async function fetchInstagram(account: Account): Promise<FetchBucket> {
     if (!fresh.accessToken) throw new Error("Instagram is missing a token");
     const response = await fetchWithTimeout(
       `https://graph.instagram.com/me/media?${new URLSearchParams({
-        fields:
-          "id,caption,media_type,media_url,thumbnail_url,permalink,timestamp,username",
+        fields: "id,caption,permalink,timestamp,username",
         access_token: fresh.accessToken,
         limit: "15",
       }).toString()}`,
@@ -174,11 +166,9 @@ export async function fetchInstagram(account: Account): Promise<FetchBucket> {
       badge: "Instagram",
       sourceKey,
       sourceLabel: LABEL,
-      imageKey: sourceKey,
       authorName: fresh.displayName,
       authorHandle: item.username || fresh.handle,
       text: clip(item.caption || ""),
-      mediaUrls: mediaUrl(item),
       url: item.permalink || "https://www.instagram.com/",
       createdAt: item.timestamp ?? null,
     }));

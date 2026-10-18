@@ -15,7 +15,7 @@ type FeedPayload = {
 };
 
 export function FeedScreen() {
-  const { paused, cappedKeys, startNewSession, settings, showImages } = useSession();
+  const { paused, cappedKeys, startNewSession } = useSession();
   const [feed, setFeed] = useState<FeedPayload | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -118,11 +118,7 @@ export function FeedScreen() {
       ) : (
         <div className="feed">
           {visiblePosts.map((post) => (
-            <PostCard
-              key={post.id}
-              post={post}
-              showMedia={showImages && settings.imageSources.includes(post.imageKey)}
-            />
+            <PostCard key={post.id} post={post} />
           ))}
         </div>
       )}

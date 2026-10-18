@@ -41,8 +41,6 @@ type SessionContextValue = {
   paused: boolean;
   settings: AppSettings;
   cappedKeys: string[];
-  showImages: boolean;
-  toggleImages: () => void;
   applySettings: (settings: AppSettings) => void;
   startNewSession: () => Promise<void>;
 };
@@ -50,7 +48,6 @@ type SessionContextValue = {
 const EMPTY_SETTINGS: AppSettings = {
   sessionLimitMinutes: null,
   sourceLimits: {},
-  imageSources: [],
 };
 
 const SessionContext = createContext<SessionContextValue | null>(null);
@@ -109,9 +106,6 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [sourceElapsedMs, setSourceElapsedMs] = useState<Record<string, number>>({});
   const [paused, setPaused] = useState(false);
   const [settings, setSettings] = useState<AppSettings>(EMPTY_SETTINGS);
-  const [showImages, setShowImages] = useState(false);
-  const toggleImages = useCallback(() => setShowImages((current) => !current), []);
-
   const idRef = useRef("");
   const startedRef = useRef(0);
   const elapsedRef = useRef(0);
@@ -319,8 +313,6 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       paused,
       settings,
       cappedKeys,
-      showImages,
-      toggleImages,
       applySettings,
       startNewSession,
     }),
@@ -331,9 +323,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       paused,
       ready,
       settings,
-      showImages,
       startNewSession,
-      toggleImages,
     ],
   );
 

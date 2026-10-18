@@ -1,5 +1,5 @@
 import { XMLParser } from "fast-xml-parser";
-import { categorySourceKey, feedImageKey, type Category, type FetchBucket, type Post, type RssFeed } from "@/lib/types";
+import { categorySourceKey, type Category, type FetchBucket, type Post, type RssFeed } from "@/lib/types";
 import { clip, errorMessage, stripHtml, textOf } from "@/lib/text";
 import { fetchWithTimeout } from "@/lib/providers/http";
 
@@ -33,21 +33,6 @@ function linkFrom(record: Record<string, unknown>): string {
     return rel == null || rel === "alternate";
   });
   return hrefOf(alternate ?? record.link) || hrefOf(record.guid);
-}
-
-function imageFrom(record: Record<string, unknown>): string[] {
-  const enclosure = record.enclosure;
-  const enclosureUrl = hrefOf(enclosure);
-  const enclosureType =
-    enclosure && typeof enclosure === "object"
-      ? String((enclosure as { "@_type"?: unknown })["@_type"] ?? "")
-      : "";
-  if (enclosureUrl.startsWith("http") && enclosureType.startsWith("image")) {
-    return [enclosureUrl];
-  }
-  const media = record["media:content"] ?? record["media:thumbnail"];
-  const mediaUrl = hrefOf(Array.isArray(media) ? media[0] : media);
-  return mediaUrl.startsWith("http") ? [mediaUrl] : [];
 }
 
 function badgeFor(kind: Category["kind"]): string {
@@ -110,11 +95,9 @@ export async function fetchRss(feed: RssFeed, category: Category): Promise<Fetch
         badge: badgeFor(category.kind),
         sourceKey,
         sourceLabel,
-        imageKey: feedImageKey(feed.id),
         authorName: parsed.title || feed.title || host,
         authorHandle: host,
         text,
-        mediaUrls: imageFrom(entry),
         url,
         createdAt: textOf(entry.pubDate) || textOf(entry.published) || textOf(entry.updated) || null,
       };

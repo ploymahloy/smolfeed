@@ -3,10 +3,9 @@ import type { Post } from "@/lib/types";
 
 type PostCardProps = {
   post: Post;
-  showMedia?: boolean;
 };
 
-export const PostCard = ({ post, showMedia = false }: PostCardProps) => {
+export const PostCard = ({ post }: PostCardProps) => {
   const when = formatWhen(post.createdAt);
   return (
     <a
@@ -32,15 +31,6 @@ export const PostCard = ({ post, showMedia = false }: PostCardProps) => {
         ) : null}
       </p>
       {post.text ? <p className="card-text">{post.text}</p> : null}
-      {showMedia && post.mediaUrls.length > 0 ? (
-        <div className={post.mediaUrls.length > 1 ? "media grid" : "media"}>
-          {post.mediaUrls.map((url) => (
-            // Remote feeds use arbitrary image hosts, so a plain img keeps them visible.
-            // eslint-disable-next-line @next/next/no-img-element
-            <img key={url} src={url} alt="" />
-          ))}
-        </div>
-      ) : null}
     </a>
   );
 };

@@ -116,19 +116,6 @@ export async function revokeBluesky(did: string): Promise<void> {
   }
 }
 
-function mediaFromEmbed(embed: unknown): string[] {
-  if (!embed || typeof embed !== "object") return [];
-  const record = embed as {
-    images?: { fullsize?: string; thumb?: string }[];
-    media?: { images?: { fullsize?: string; thumb?: string }[] };
-  };
-  const images = record.images ?? record.media?.images ?? [];
-  return images
-    .map((image) => image.fullsize || image.thumb)
-    .filter((url): url is string => Boolean(url))
-    .slice(0, 4);
-}
-
 function recordText(record: unknown): { text: string; createdAt: string | null } {
   if (!record || typeof record !== "object") return { text: "", createdAt: null };
   const value = record as { text?: unknown; createdAt?: unknown };
@@ -155,11 +142,9 @@ export async function fetchBluesky(account: Account): Promise<FetchBucket> {
         badge: "Bluesky",
         sourceKey,
         sourceLabel,
-        imageKey: sourceKey,
         authorName: author.displayName || author.handle,
         authorHandle: author.handle,
         text: clip(record.text),
-        mediaUrls: mediaFromEmbed(post.embed),
         url: `https://bsky.app/profile/${author.handle}/post/${post.uri.split("/").pop() ?? ""}`,
         createdAt: record.createdAt,
       };
