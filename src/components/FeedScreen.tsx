@@ -69,12 +69,8 @@ export function FeedScreen() {
     .filter((label): label is string => Boolean(label));
 
   return (
-    <div className="column">
+    <div className="column flush-top">
       <header className="page-head">
-        <div>
-          <h1>Feed</h1>
-          <p>Sources woven together, without a ranking.</p>
-        </div>
         {!paused && loading && feed ? (
           <p className="status" role="status">
             Refreshing…
@@ -107,7 +103,7 @@ export function FeedScreen() {
           <p className="sr-only" role="status">
             Loading feed
           </p>
-          {Array.from({ length: 3 }, (_, index) => (
+          {Array.from({ length: 7 }, (_, index) => (
             <PostCardSkeleton key={index} />
           ))}
         </div>

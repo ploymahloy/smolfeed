@@ -23,7 +23,6 @@ export const PostCard = ({ post, showMedia = false }: PostCardProps) => {
         <span className="chip" data-provider={post.provider}>
           {post.badge}
         </span>
-        <span className="source-name">{post.sourceLabel}</span>
         {when ? <time dateTime={post.createdAt ?? undefined}>{when}</time> : null}
       </header>
       <p className="author">

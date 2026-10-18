@@ -1,5 +1,5 @@
 export const PostCardSkeleton = () => (
-  <div className="card" aria-hidden="true">
+  <div className="card card-skeleton" aria-hidden="true">
     <div className="card-meta">
       <span className="skeleton skeleton-chip" />
       <span className="skeleton skeleton-source" />
