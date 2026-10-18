@@ -72,9 +72,10 @@ export function FeedScreen() {
     <div className="column flush-top">
       <header className="page-head">
         {!paused && loading && feed ? (
-          <p className="status" role="status">
-            Refreshing…
-          </p>
+          <div className="status spinner-heading" role="status">
+            <span className="spinner" aria-hidden="true" />
+            <span className="sr-only">Refreshing feed</span>
+          </div>
         ) : null}
       </header>
 
