@@ -73,7 +73,7 @@ function freshSession(): PersistedSession {
 
 function readStored(): PersistedSession {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = sessionStorage.getItem(STORAGE_KEY);
     if (!raw) return freshSession();
     const parsed = JSON.parse(raw) as Partial<PersistedSession>;
     if (!parsed.id || typeof parsed.elapsedMs !== "number") return freshSession();
@@ -142,7 +142,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       paused: pausedRef.current,
       started: hasStartedRef.current,
     };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
   }, []);
 
   const applyStored = useCallback((session: PersistedSession) => {
