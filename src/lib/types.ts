@@ -71,7 +71,6 @@ export type Category = {
 
 export type AppSettings = {
   sessionLimitMinutes: number | null;
-  deterEnabled: boolean;
   sourceLimits: Record<string, number>;
   imageSources: string[];
 };

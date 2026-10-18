@@ -43,14 +43,12 @@ type SessionContextValue = {
   cappedKeys: string[];
   showImages: boolean;
   toggleImages: () => void;
-  toggleDeter: () => Promise<void>;
   applySettings: (settings: AppSettings) => void;
   startNewSession: () => Promise<void>;
 };
 
 const EMPTY_SETTINGS: AppSettings = {
   sessionLimitMinutes: null,
-  deterEnabled: false,
   sourceLimits: {},
   imageSources: [],
 };
@@ -215,22 +213,6 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     setSettings(next);
   }, []);
 
-  const toggleDeter = useCallback(async () => {
-    const next = !settingsRef.current.deterEnabled;
-    const optimistic = { ...settingsRef.current, deterEnabled: next };
-    applySettings(optimistic);
-    const response = await fetch("/api/settings", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ deterEnabled: next }),
-    });
-    if (!response.ok) {
-      applySettings({ ...settingsRef.current, deterEnabled: !next });
-      return;
-    }
-    applySettings((await response.json()) as AppSettings);
-  }, [applySettings]);
-
   const startNewSession = useCallback(async () => {
     await flush();
     pendingRef.current = {};
@@ -339,7 +321,6 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       cappedKeys,
       showImages,
       toggleImages,
-      toggleDeter,
       applySettings,
       startNewSession,
     }),
@@ -352,7 +333,6 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       settings,
       showImages,
       startNewSession,
-      toggleDeter,
       toggleImages,
     ],
   );

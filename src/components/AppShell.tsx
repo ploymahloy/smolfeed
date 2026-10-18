@@ -1,18 +1,11 @@
 "use client";
 
-import { grayscaleAmount } from "@/lib/deter";
 import { Navbar } from "@/components/Navbar";
-import { SessionProvider, useSession } from "@/components/SessionProvider";
+import { SessionProvider } from "@/components/SessionProvider";
 
 function ShellFrame({ children }: { children: React.ReactNode }) {
-  const { elapsedMs, settings } = useSession();
-  const amount = grayscaleAmount(
-    elapsedMs,
-    settings.sessionLimitMinutes,
-    settings.deterEnabled,
-  );
   return (
-    <div className="shell" style={{ filter: `grayscale(${amount})` }} data-grayscale={amount.toFixed(3)}>
+    <div className="shell">
       <a className="skip" href="#main">
         Skip to content
       </a>

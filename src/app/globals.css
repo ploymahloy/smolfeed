@@ -51,7 +51,6 @@ p { margin: 0; }
 
 .shell {
   min-height: 100%;
-  transition: filter 1s linear;
 }
 
 .skip {
@@ -119,19 +118,19 @@ p { margin: 0; }
   color: var(--muted);
 }
 
-.deter, .button, .text-button {
+.nav-btn, .button, .text-button {
   border: 0;
   border-radius: 999px;
 }
 
-.deter {
+.nav-btn {
   background: transparent;
   box-shadow: inset 0 0 0 1px var(--line);
   padding: 0.4rem 0.85rem;
 }
 
-.deter.icon { display: inline-flex; align-items: center; gap: 0.4rem; }
-.deter.icon svg { width: 1.1rem; height: 1.1rem; flex: none; }
+.nav-btn.icon { display: inline-flex; align-items: center; gap: 0.4rem; }
+.nav-btn.icon svg { width: 1.1rem; height: 1.1rem; flex: none; }
 
 /* Mobile-only nav pieces; the 760px block below turns them on. */
 .nav-toggle, .nav-backdrop, .nav-drawer-clock { display: none; }
@@ -152,7 +151,7 @@ p { margin: 0; }
 .nav-toggle svg { width: 1.5rem; height: 1.5rem; }
 .nav-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-.deter.on {
+.nav-btn.on {
   background: var(--ink);
   color: var(--card);
 }
@@ -435,7 +434,7 @@ code {
   h1 { font-size: 1.9rem; }
   h2 { font-size: 1.35rem; }
 
-  /* Navbar: hamburger, wordmark, then the image toggle and Deter stay in the bar. */
+  /* Navbar: hamburger, wordmark, then the image toggle stay in the bar. */
   .nav {
     height: var(--nav-h);
     gap: 0.5rem;
@@ -447,11 +446,10 @@ code {
   .nav-tools { gap: 0.5rem; }
   .nav-tools-clock { display: none; }
 
-  .deter { min-height: 2.75rem; }
-  .deter.icon { justify-content: center; width: 2.75rem; padding: 0; }
+  .nav-btn { min-height: 2.75rem; }
+  .nav-btn.icon { justify-content: center; width: 2.75rem; padding: 0; }
 
-  /* Slide-out drawer. Absolute under the sticky bar, because the grayscale
-     filter on .shell would otherwise be the containing block for fixed. */
+  /* Slide-out drawer, absolutely positioned under the sticky bar. */
   .nav-links {
     position: absolute;
     top: 100%;
@@ -574,7 +572,6 @@ code {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .shell { transition: none; }
   .skeleton { animation: none; }
   .switch, .switch::after, .card { transition: none; }
   .nav-links, .nav-backdrop { transition: none !important; }

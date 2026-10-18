@@ -14,13 +14,11 @@ export async function GET(): Promise<NextResponse> {
 export async function PUT(request: Request): Promise<NextResponse> {
   const body = (await request.json()) as {
     sessionLimitMinutes?: unknown;
-    deterEnabled?: unknown;
     sourceLimits?: unknown;
     imageSources?: unknown;
   };
   const patch: {
     sessionLimitMinutes?: number | null;
-    deterEnabled?: boolean;
     sourceLimits?: { sourceKey: string; limitMinutes: number | null }[];
     imageSources?: string[];
   } = {};
@@ -52,13 +50,6 @@ export async function PUT(request: Request): Promise<NextResponse> {
       }
       patch.sessionLimitMinutes = minutes;
     }
-  }
-
-  if ("deterEnabled" in body) {
-    if (typeof body.deterEnabled !== "boolean") {
-      return NextResponse.json({ error: "Deter must be on or off" }, { status: 400 });
-    }
-    patch.deterEnabled = body.deterEnabled;
   }
 
   if ("sourceLimits" in body) {

@@ -46,7 +46,7 @@ const MenuIcon = ({ open }: { open: boolean }) => (
 
 export function Navbar() {
   const pathname = usePathname();
-  const { ready, elapsedMs, settings, toggleDeter, showImages, toggleImages } = useSession();
+  const { ready, elapsedMs, settings, showImages, toggleImages } = useSession();
   const [isMenuOpen, setMenuOpen] = useState(false);
   // Slide transitions run only around a user toggle. Without this, the closed
   // drawer animates out whenever the mobile styles first apply (late CSS, or the
@@ -126,7 +126,7 @@ export function Navbar() {
         </p>
         <button
           type="button"
-          className={showImages ? "deter icon on" : "deter icon"}
+          className={showImages ? "nav-btn icon on" : "nav-btn icon"}
           aria-pressed={showImages}
           aria-describedby="images-hint"
           aria-label="Show images"
@@ -136,18 +136,6 @@ export function Navbar() {
         </button>
         <span id="images-hint" className="sr-only">
           Shows images for the sources switched on in Sources settings. Off by default.
-        </span>
-        <button
-          type="button"
-          className={settings.deterEnabled ? "deter on" : "deter"}
-          aria-pressed={settings.deterEnabled}
-          aria-describedby="deter-hint"
-          onClick={() => void toggleDeter()}
-        >
-          Deter
-        </button>
-        <span id="deter-hint" className="sr-only">
-          Gradually shifts the page from full color to grayscale as this session runs.
         </span>
       </div>
     </header>

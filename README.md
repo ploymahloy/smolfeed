@@ -14,4 +14,4 @@ Add provider keys to `.env` when you want live accounts. Redirect URI for each a
 
 `http://127.0.0.1:3000/api/auth/{provider}/callback`
 
-RSS categories work without keys. Screen time, Deter, and analytics stay inside this app.
+RSS categories work without keys. Screen time and analytics stay inside this app.

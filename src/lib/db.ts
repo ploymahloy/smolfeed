@@ -401,7 +401,6 @@ export function getSettings(): AppSettings {
   }
   return {
     sessionLimitMinutes: parseLimitMinutes(map.get("session_limit_minutes")),
-    deterEnabled: map.get("deter_enabled") === "1",
     sourceLimits,
     imageSources: parseImageSources(map.get("image_sources")),
   };
@@ -422,7 +421,6 @@ const parseImageSources = (raw: string | undefined): string[] => {
 
 export function saveSettings(patch: {
   sessionLimitMinutes?: number | null;
-  deterEnabled?: boolean;
   sourceLimits?: { sourceKey: string; limitMinutes: number | null }[];
   imageSources?: string[];
 }): AppSettings {
@@ -439,12 +437,6 @@ export function saveSettings(patch: {
            ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
         ).run("session_limit_minutes", String(patch.sessionLimitMinutes));
       }
-    }
-    if (patch.deterEnabled !== undefined) {
-      db.prepare(
-        `INSERT INTO settings (key, value) VALUES (?, ?)
-         ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
-      ).run("deter_enabled", patch.deterEnabled ? "1" : "0");
     }
     if (patch.imageSources) {
       db.prepare(
