@@ -25,7 +25,7 @@ export function AnalyticsScreen() {
       <header className="page-head">
         <div>
           <h1>Analytics</h1>
-          <p>Screen time inside Smolfeed, for the last 7 days.</p>
+          <p>Smolfeed screen time for the last 7 days.</p>
         </div>
       </header>
       {error ? <p className="banner error">{error}</p> : null}
@@ -43,22 +43,6 @@ export function AnalyticsScreen() {
             </article>
           </div>
           <UsageChart days={report.days} />
-          <p className="lede">Minutes count only while the feed is open and this tab is visible. Time on Sources and Analytics is not counted. Source time counts while that source’s cards are on screen.</p>
-          <section className="panel">
-            <h2>Suggestions</h2>
-            {report.suggestions.length === 0 ? (
-              <p>This week sits inside the limits you set.</p>
-            ) : (
-              <ul className="suggestions">
-                {report.suggestions.map((suggestion) => (
-                  <li key={suggestion.id}>
-                    <h3>{suggestion.title}</h3>
-                    <p>{suggestion.detail}</p>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
         </>
       ) : null}
     </div>

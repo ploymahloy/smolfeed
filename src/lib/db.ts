@@ -524,15 +524,6 @@ export function usageSince(sinceMs: number): DayUsageRow[] {
     .all(sinceMs) as DayUsageRow[];
 }
 
-export function sessionPeaksSince(sinceMs: number): number[] {
-  const rows = getDb()
-    .prepare(
-      `SELECT elapsed_seconds AS elapsed FROM sessions WHERE started_at >= ?`,
-    )
-    .all(sinceMs) as { elapsed: number }[];
-  return rows.map((row) => row.elapsed);
-}
-
 export function getMastodonApp(instanceUrl: string): {
   clientId: string;
   clientSecret: string;

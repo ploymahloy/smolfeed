@@ -351,7 +351,7 @@ p { margin: 0; }
 
 .panel { padding: 1.15rem; margin-bottom: 1rem; }
 
-.source-list, .category-list, .suggestions { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.85rem; }
+.source-list, .category-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.85rem; }
 
 .source-row, .category-list > li {
   display: flex;
@@ -418,9 +418,6 @@ textarea { resize: vertical; }
 .legend { display: flex; flex-wrap: wrap; gap: 0.7rem 1rem; list-style: none; padding: 0; margin: 0.4rem 0 0; color: var(--muted); }
 .legend li { display: flex; align-items: center; gap: 0.4rem; }
 .legend span { width: 0.7rem; height: 0.7rem; border-radius: 99px; }
-
-.suggestions li { display: grid; gap: 0.25rem; }
-.suggestions p { color: var(--muted); }
 
 code {
   font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;

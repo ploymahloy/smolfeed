@@ -1,5 +1,3 @@
-import type { Suggestion } from "@/lib/suggestions";
-
 export type ChartSegment = {
   key: string;
   label: string;
@@ -17,7 +15,6 @@ export type AnalyticsReport = {
   days: ChartDay[];
   todayMinutes: number;
   weekMinutes: number;
-  suggestions: Suggestion[];
 };
 
 export function formatMinutes(value: number): string {

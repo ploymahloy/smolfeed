@@ -1,6 +1,5 @@
-import { getSettings, sessionPeaksSince, usageSince } from "@/lib/db";
+import { usageSince } from "@/lib/db";
 import type { AnalyticsReport, ChartDay, ChartSegment } from "@/lib/report";
-import { suggestions, type UsageSlice } from "@/lib/suggestions";
 
 export type { AnalyticsReport, ChartDay, ChartSegment };
 
@@ -31,7 +30,6 @@ function windowDays(): { startMs: number; days: { date: string; label: string }[
 export function buildAnalytics(): AnalyticsReport {
   const { startMs, days } = windowDays();
   const rows = usageSince(startMs);
-  const settings = getSettings();
   const byDay = new Map<string, ChartSegment[]>();
   for (const day of days) byDay.set(day.date, []);
   for (const row of rows) {
@@ -49,29 +47,15 @@ export function buildAnalytics(): AnalyticsReport {
     label: day.label,
     segments: byDay.get(day.date) ?? [],
   }));
-  const week: UsageSlice[] = rows.map((row) => ({
-    sourceKey: row.sourceKey,
-    label: row.sourceLabel,
-    minutes: row.seconds / 60,
-  }));
-  const weekMinutes = week.reduce((sum, slice) => sum + slice.minutes, 0);
+  const weekMinutes = rows.reduce((sum, row) => sum + row.seconds / 60, 0);
   const today = chartDays[chartDays.length - 1];
   const todayMinutes = (today?.segments ?? []).reduce(
     (sum, segment) => sum + segment.minutes,
     0,
   );
-  const sessionPeaksMinutes = sessionPeaksSince(startMs).map(
-    (seconds) => seconds / 60,
-  );
   return {
     days: chartDays,
     todayMinutes,
     weekMinutes,
-    suggestions: suggestions({
-      week,
-      sessionLimitMinutes: settings.sessionLimitMinutes,
-      sourceLimitMinutes: settings.sourceLimits,
-      sessionPeaksMinutes,
-    }),
   };
 }
