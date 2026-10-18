@@ -16,7 +16,8 @@ type FeedPayload = {
 };
 
 export function FeedScreen() {
-  const { ready, started, paused, cappedKeys, startNewSession } = useSession();
+  const { ready, started, paused, cappedKeys, startNewSession, setFeedLoading } =
+    useSession();
   const [feed, setFeed] = useState<FeedPayload | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -39,6 +40,12 @@ export function FeedScreen() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  // The clock holds while the skeleton or refresh spinner is showing.
+  useEffect(() => {
+    setFeedLoading(loading);
+    return () => setFeedLoading(false);
+  }, [loading, setFeedLoading]);
 
   // Refresh when the reader scrolls away from the top and then returns to it.
   const loadingRef = useRef(true);

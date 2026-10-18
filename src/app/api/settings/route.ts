@@ -3,7 +3,7 @@ import { getSettings, saveSettings } from "@/lib/db";
 import { parseLimitMinutes } from "@/lib/limits";
 export const dynamic = "force-dynamic";
 
-const SOURCE_KEY = /^(account|category):[0-9a-f-]{36}$/i;
+const SOURCE_KEY = /^(account|category|feed):[0-9a-f-]{36}$/i;
 
 export async function GET(): Promise<NextResponse> {
   return NextResponse.json(getSettings());

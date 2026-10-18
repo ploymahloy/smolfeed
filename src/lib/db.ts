@@ -383,9 +383,12 @@ export function createCategory(input: {
 
 export function deleteCategory(id: string): void {
   const db = getDb();
-  db.prepare(`DELETE FROM source_limits WHERE source_key = ?`).run(
-    `category:${id}`,
-  );
+  const removeLimit = db.prepare(`DELETE FROM source_limits WHERE source_key = ?`);
+  removeLimit.run(`category:${id}`);
+  const feedIds = db
+    .prepare(`SELECT id FROM feeds WHERE category_id = ?`)
+    .all(id) as { id: string }[];
+  for (const feed of feedIds) removeLimit.run(`feed:${feed.id}`);
   db.prepare(`DELETE FROM feeds WHERE category_id = ?`).run(id);
   db.prepare(`DELETE FROM categories WHERE id = ?`).run(id);
 }

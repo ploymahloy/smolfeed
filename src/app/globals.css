@@ -118,6 +118,38 @@ p { margin: 0; }
   color: var(--muted);
 }
 
+/* Echo effect for a clock held still off the feed page: ghost copies of the
+   time ripple outward. The ghosts are decorative; the real text stays put. */
+.clock[data-paused="true"] {
+  position: relative;
+  color: var(--accent);
+  --echo-a: var(--accent);
+  --echo-b: #c2410c;
+}
+
+.clock[data-paused="true"]::before,
+.clock[data-paused="true"]::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  padding: inherit;
+  text-align: inherit;
+  pointer-events: none;
+  transform-origin: right center;
+  animation: clock-echo 2s ease-out infinite;
+}
+
+.clock[data-paused="true"]::before { color: var(--echo-a); }
+.clock[data-paused="true"]::after { color: var(--echo-b); animation-delay: 1s; }
+
+.nav-drawer-clock[data-paused="true"]::before,
+.nav-drawer-clock[data-paused="true"]::after { transform-origin: left center; }
+
+@keyframes clock-echo {
+  0% { opacity: 0.8; transform: scale(1); filter: blur(0); }
+  100% { opacity: 0; transform: scale(1.5); filter: blur(3px); }
+}
+
 .button, .text-button {
   border: 0;
   border-radius: 999px;
@@ -552,5 +584,7 @@ code {
   .skeleton { animation: none; }
   .spinner { animation-duration: 2s; }
   .card { transition: none; }
+  .clock[data-paused="true"]::before,
+  .clock[data-paused="true"]::after { animation: none; display: none; }
   .nav-links, .nav-backdrop { transition: none !important; }
 }

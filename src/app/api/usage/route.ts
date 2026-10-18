@@ -13,7 +13,7 @@ const PROVIDERS = new Set<ProviderId>([
   "mastodon",
   "rss",
 ]);
-const SOURCE_KEY = /^(account|category):[0-9a-f-]{36}$/i;
+const SOURCE_KEY = /^(account|category|feed):[0-9a-f-]{36}$/i;
 const SESSION_ID = /^[0-9a-f-]{36}$/i;
 
 export async function POST(request: Request): Promise<NextResponse> {

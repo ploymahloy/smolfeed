@@ -100,6 +100,20 @@ export function categorySourceKey(categoryId: string): string {
   return `category:${categoryId}`;
 }
 
+export function feedSourceKey(feedId: string): string {
+  return `feed:${feedId}`;
+}
+
+export function feedLabel(feed: Pick<RssFeed, "title" | "url">): string {
+  const title = feed.title.trim();
+  if (title) return title;
+  try {
+    return new URL(feed.url).hostname.replace(/^www\./, "");
+  } catch {
+    return feed.url;
+  }
+}
+
 export function publicAccount(account: Account): PublicAccount {
   return {
     id: account.id,

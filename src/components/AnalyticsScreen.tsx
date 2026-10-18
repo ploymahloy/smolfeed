@@ -43,7 +43,7 @@ export function AnalyticsScreen() {
             </article>
           </div>
           <UsageChart days={report.days} />
-          <p className="lede">Minutes count while this tab is visible. Source time counts while that source’s cards are on screen.</p>
+          <p className="lede">Minutes count only while the feed is open and this tab is visible. Time on Sources and Analytics is not counted. Source time counts while that source’s cards are on screen.</p>
           <section className="panel">
             <h2>Suggestions</h2>
             {report.suggestions.length === 0 ? (

@@ -5,7 +5,8 @@ import { useEffect, useState } from "react";
 import { useSession } from "@/components/SessionProvider";
 import {
   accountSourceKey,
-  categorySourceKey,
+  feedLabel,
+  feedSourceKey,
   type AppSettings,
   type Category,
   type PublicAccount,
@@ -53,15 +54,14 @@ function toOptions(payload: SourcesPayload): SourceOption[] {
     }
   }
   for (const category of payload.categories) {
-    // Label by the feeds themselves (for example "Hacker News: Front Page"),
-    // falling back to the category name if it has none.
-    const titles = category.feeds
-      .map((feed) => feed.title.trim())
-      .filter((title, index, all) => title && all.indexOf(title) === index);
-    options.push({
-      key: categorySourceKey(category.id),
-      label: titles.length > 0 ? titles.join(", ") : category.name,
-    });
+    // One option per feed, labelled by the feed itself (for example
+    // "Hacker News: Front Page"), matching the analytics chart.
+    for (const feed of category.feeds) {
+      options.push({
+        key: feedSourceKey(feed.id),
+        label: feedLabel(feed),
+      });
+    }
   }
   return options;
 }

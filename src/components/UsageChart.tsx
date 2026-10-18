@@ -1,5 +1,5 @@
 import { formatMinutes, type ChartDay } from "@/lib/report";
-import { providerColor } from "@/lib/palette";
+import { sourceColors } from "@/lib/palette";
 
 export function UsageChart({ days }: { days: ChartDay[] }) {
   const width = 640;
@@ -13,21 +13,46 @@ export function UsageChart({ days }: { days: ChartDay[] }) {
   );
   const slot = innerWidth / Math.max(days.length, 1);
   const barWidth = slot * 0.58;
-  const legend = new Map<string, { label: string; color: string }>();
+  const legend = new Map<string, { label: string; minutes: number }>();
   for (const day of days) {
     for (const segment of day.segments) {
-      if (!legend.has(segment.key)) {
-        legend.set(segment.key, {
-          label: segment.label,
-          color: providerColor(segment.provider),
-        });
+      const entry = legend.get(segment.key);
+      if (entry) {
+        entry.minutes += segment.minutes;
+        entry.label = segment.label;
+      } else {
+        legend.set(segment.key, { label: segment.label, minutes: segment.minutes });
       }
     }
   }
+  const colors = sourceColors(legend.keys());
+  const hatchId = (key: string) => `hatch-${[...colors.keys()].indexOf(key)}`;
+  const fillFor = (key: string) => {
+    const entry = colors.get(key);
+    if (!entry) return "#6d655c";
+    return entry.hatched ? `url(#${hatchId(key)})` : entry.color;
+  };
 
   return (
     <figure className="chart">
       <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Screen time for the last 7 days">
+        <defs>
+          {[...colors.entries()]
+            .filter(([, entry]) => entry.hatched)
+            .map(([key, entry]) => (
+              <pattern
+                key={key}
+                id={hatchId(key)}
+                width="6"
+                height="6"
+                patternUnits="userSpaceOnUse"
+                patternTransform="rotate(45)"
+              >
+                <rect width="6" height="6" fill={entry.color} />
+                <rect width="2.5" height="6" fill="#fffdf8" fillOpacity="0.55" />
+              </pattern>
+            ))}
+        </defs>
         <line
           x1={pad.left}
           y1={pad.top + innerHeight}
@@ -55,7 +80,9 @@ export function UsageChart({ days }: { days: ChartDay[] }) {
                     width={barWidth}
                     height={Math.max(barHeight, 0)}
                     rx={3}
-                    fill={providerColor(segment.provider)}
+                    fill={fillFor(segment.key)}
+                    stroke="#fffdf8"
+                    strokeWidth={1.5}
                   >
                     <title>{`${segment.label}: ${formatMinutes(segment.minutes)} min`}</title>
                   </rect>
@@ -77,8 +104,17 @@ export function UsageChart({ days }: { days: ChartDay[] }) {
         <ul className="legend">
           {[...legend.entries()].map(([key, item]) => (
             <li key={key}>
-              <span style={{ background: item.color }} />
-              {item.label}
+              <span
+                aria-hidden="true"
+                style={
+                  colors.get(key)?.hatched
+                    ? {
+                        background: `repeating-linear-gradient(45deg, ${colors.get(key)?.color} 0 3px, #fffdf8 3px 5px)`,
+                      }
+                    : { background: colors.get(key)?.color }
+                }
+              />
+              {item.label} · {formatMinutes(item.minutes)} min
             </li>
           ))}
         </ul>

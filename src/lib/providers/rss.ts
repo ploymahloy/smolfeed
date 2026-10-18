@@ -1,5 +1,5 @@
 import { XMLParser } from "fast-xml-parser";
-import { categorySourceKey, type Category, type FetchBucket, type Post, type RssFeed } from "@/lib/types";
+import { feedLabel, feedSourceKey, type Category, type FetchBucket, type Post, type RssFeed } from "@/lib/types";
 import { updateFeedTitle } from "@/lib/db";
 import { clip, errorMessage, stripHtml, textOf } from "@/lib/text";
 import { fetchWithTimeout } from "@/lib/providers/http";
@@ -62,8 +62,8 @@ function itemsFrom(doc: unknown): { title: string; entries: Record<string, unkno
 }
 
 export async function fetchRss(feed: RssFeed, category: Category): Promise<FetchBucket> {
-  const sourceKey = categorySourceKey(category.id);
-  const sourceLabel = category.name;
+  const sourceKey = feedSourceKey(feed.id);
+  let sourceLabel = feedLabel(feed).slice(0, 80);
   try {
     const response = await fetchWithTimeout(feed.url, {
       headers: {
@@ -77,6 +77,7 @@ export async function fetchRss(feed: RssFeed, category: Category): Promise<Fetch
     // Remember the feed's own name so the UI can show it instead of the host.
     const channelTitle = parsed.title.trim().slice(0, 120);
     if (channelTitle) {
+      sourceLabel = channelTitle.slice(0, 80);
       try {
         updateFeedTitle(feed.id, channelTitle);
       } catch {

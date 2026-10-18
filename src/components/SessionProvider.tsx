@@ -9,11 +9,13 @@ import {
   useRef,
   useState,
 } from "react";
+import { usePathname } from "next/navigation";
 import { cappedSourceKeys, isSessionCapped } from "@/lib/limits";
 import type { AppSettings, ProviderId } from "@/lib/types";
 
 const STORAGE_KEY = "smolfeed.session.v1";
 const FLUSH_MS = 15_000;
+const TICK_MS = 250;
 
 type VisibleSource = {
   key: string;
@@ -46,6 +48,13 @@ type SessionContextValue = {
   started: boolean;
   elapsedMs: number;
   paused: boolean;
+  // True while the reader is on any page other than the feed. The clock holds
+  // its value there and does not count time.
+  awayFromFeed: boolean;
+  // True while the feed shows its skeleton loader or refresh spinner. The
+  // clock holds its value until the posts are on screen.
+  feedLoading: boolean;
+  setFeedLoading: (loading: boolean) => void;
   settings: AppSettings;
   cappedKeys: string[];
   applySettings: (settings: AppSettings) => void;
@@ -115,6 +124,16 @@ function readVisible(): VisibleSource[] {
 }
 
 export function SessionProvider({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const awayFromFeed = pathname !== "/";
+  const awayRef = useRef(awayFromFeed);
+  awayRef.current = awayFromFeed;
+  const [feedLoading, setFeedLoadingState] = useState(false);
+  const loadingRef = useRef(false);
+  const setFeedLoading = useCallback((loading: boolean) => {
+    loadingRef.current = loading;
+    setFeedLoadingState(loading);
+  }, []);
   const [ready, setReady] = useState(false);
   const [elapsedMs, setElapsedMs] = useState(0);
   const [sourceElapsedMs, setSourceElapsedMs] = useState<Record<string, number>>({});
@@ -280,12 +299,18 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!ready) return;
     let last = Date.now();
+    let shownSecond = Math.floor(elapsedRef.current / 1000);
+    // Ticking faster than once a second keeps timer jitter from skipping a
+    // displayed second: a 1s interval fires every ~1.005s, so the countdown
+    // would otherwise drop two seconds at once every few minutes.
     const timer = window.setInterval(() => {
       const now = Date.now();
       const delta = Math.min(Math.max(0, now - last), 5000);
       last = now;
       if (
         document.visibilityState !== "visible" ||
+        awayRef.current ||
+        loadingRef.current ||
         pausedRef.current ||
         !hasStartedRef.current
       ) {
@@ -324,13 +349,18 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         pausedRef.current = true;
         setPaused(true);
       }
+      // Time is counted every tick, but the clock only re-renders when its
+      // visible second changes (or the session pauses).
+      const second = Math.floor(elapsedRef.current / 1000);
+      if (second === shownSecond && !pausedRef.current) return;
+      shownSecond = second;
       setElapsedMs(elapsedRef.current);
       setSourceElapsedMs({ ...sourceRef.current });
       persist();
       if (sinceFlushRef.current >= FLUSH_MS || pausedRef.current) {
         void flush();
       }
-    }, 1000);
+    }, TICK_MS);
     const onHide = () => {
       if (document.visibilityState === "hidden") {
         persist();
@@ -346,6 +376,14 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     };
   }, [flush, persist, ready]);
 
+  // Leaving the feed stops the clock; write out what was counted so the
+  // analytics page sees it right away.
+  useEffect(() => {
+    if (!ready || !awayFromFeed) return;
+    persist();
+    void flush();
+  }, [awayFromFeed, flush, persist, ready]);
+
   const cappedKeys = useMemo(
     () => cappedSourceKeys(sourceElapsedMs, settings.sourceLimits),
     [settings.sourceLimits, sourceElapsedMs],
@@ -357,6 +395,9 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       started,
       elapsedMs,
       paused,
+      awayFromFeed,
+      feedLoading,
+      setFeedLoading,
       settings,
       cappedKeys,
       applySettings,
@@ -365,9 +406,12 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     }),
     [
       applySettings,
+      awayFromFeed,
       beginSession,
       cappedKeys,
       elapsedMs,
+      feedLoading,
+      setFeedLoading,
       paused,
       ready,
       settings,

@@ -29,7 +29,8 @@ const MenuIcon = ({ open }: { open: boolean }) => (
 
 export function Navbar() {
   const pathname = usePathname();
-  const { ready, started, elapsedMs, settings } = useSession();
+  const { ready, started, elapsedMs, settings, awayFromFeed, feedLoading } =
+    useSession();
   const [isMenuOpen, setMenuOpen] = useState(false);
   // Slide transitions run only around a user toggle. Without this, the closed
   // drawer animates out whenever the mobile styles first apply (late CSS, or the
@@ -39,7 +40,17 @@ export function Navbar() {
     ready && started
       ? formatCountdown(elapsedMs, settings.sessionLimitMinutes)
       : "";
-  const clockLabel = clock ? `Time remaining: ${clock}` : '';
+  // The clock holds still off the feed page and while the feed is loading;
+  // the echo effect marks that.
+  const clockPaused = Boolean(clock) && (awayFromFeed || feedLoading);
+  const clockLabel = clock
+    ? `Time remaining: ${clock}${clockPaused ? ", paused" : ""}`
+    : "";
+  const clockProps = {
+    "aria-label": clockLabel,
+    "data-paused": clockPaused ? "true" : undefined,
+    "data-text": clockPaused ? clock : undefined,
+  };
 
   // Close the drawer after navigating.
   useEffect(() => {
@@ -100,13 +111,13 @@ export function Navbar() {
             </Link>
           );
         })}
-        <p className="clock nav-drawer-clock" aria-label={clockLabel}>
+        <p className="clock nav-drawer-clock" {...clockProps}>
           {clock}
         </p>
       </nav>
       <div className="nav-backdrop" onClick={() => setMenuOpen(false)} aria-hidden="true" />
       <div className="nav-tools">
-        <p className="clock nav-tools-clock" aria-label={clockLabel}>
+        <p className="clock nav-tools-clock" {...clockProps}>
           {clock}
         </p>
       </div>
