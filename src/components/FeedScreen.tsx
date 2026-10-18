@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PostCard } from "@/components/PostCard";
 import { PostCardSkeleton } from "@/components/PostCardSkeleton";
+import { SessionSetupCard } from "@/components/SessionSetupCard";
 import { useSession } from "@/components/SessionProvider";
 import type { Post, SourceNotice } from "@/lib/types";
 
@@ -15,7 +16,7 @@ type FeedPayload = {
 };
 
 export function FeedScreen() {
-  const { paused, cappedKeys, startNewSession } = useSession();
+  const { ready, started, paused, cappedKeys, startNewSession } = useSession();
   const [feed, setFeed] = useState<FeedPayload | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -91,7 +92,9 @@ export function FeedScreen() {
         </p>
       ) : null}
 
-      {paused ? (
+      {ready && !started ? (
+        <SessionSetupCard refreshKey={feed} />
+      ) : paused ? (
         <section className="pause">
           <h2>Session limit reached</h2>
           <p>The clock is stopped. Start a new session when you want the feed back.</p>
@@ -99,7 +102,7 @@ export function FeedScreen() {
             Start a new session
           </button>
         </section>
-      ) : loading && !feed ? (
+      ) : !ready || (loading && !feed) ? (
         <div className="feed" aria-busy="true">
           <p className="sr-only" role="status">
             Loading feed

@@ -3,13 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { formatSessionClock } from "@/lib/limits";
+import { formatCountdown } from "@/lib/limits";
 import { useSession } from "@/components/SessionProvider";
 
 const LINKS = [
   { href: "/", label: "Feed" },
-  { href: "/analytics", label: "Analytics" },
   { href: "/sources", label: "Sources" },
+  { href: "/analytics", label: "Analytics" }
 ];
 
 const MOBILE_QUERY = "(max-width: 760px)";
@@ -29,15 +29,17 @@ const MenuIcon = ({ open }: { open: boolean }) => (
 
 export function Navbar() {
   const pathname = usePathname();
-  const { ready, elapsedMs, settings } = useSession();
+  const { ready, started, elapsedMs, settings } = useSession();
   const [isMenuOpen, setMenuOpen] = useState(false);
   // Slide transitions run only around a user toggle. Without this, the closed
   // drawer animates out whenever the mobile styles first apply (late CSS, or the
   // viewport crossing the breakpoint), which looks like it opened then closed.
   const [animate, setAnimate] = useState(false);
-  const clock = ready
-    ? formatSessionClock(elapsedMs, settings.sessionLimitMinutes)
-    : "–";
+  const clock =
+    ready && started
+      ? formatCountdown(elapsedMs, settings.sessionLimitMinutes)
+      : "";
+  const clockLabel = clock ? `Time remaining: ${clock}` : '';
 
   // Close the drawer after navigating.
   useEffect(() => {
@@ -98,13 +100,13 @@ export function Navbar() {
             </Link>
           );
         })}
-        <p className="clock nav-drawer-clock" aria-label={`Session time ${clock}`}>
+        <p className="clock nav-drawer-clock" aria-label={clockLabel}>
           {clock}
         </p>
       </nav>
       <div className="nav-backdrop" onClick={() => setMenuOpen(false)} aria-hidden="true" />
       <div className="nav-tools">
-        <p className="clock nav-tools-clock" aria-label={`Session time ${clock}`}>
+        <p className="clock nav-tools-clock" aria-label={clockLabel}>
           {clock}
         </p>
       </div>

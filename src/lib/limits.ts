@@ -28,6 +28,26 @@ export function formatSessionClock(
   return `${minutes} / ${limitMinutes} min`;
 }
 
+export function formatCountdown(
+  elapsedMs: number,
+  limitMinutes: number | null,
+): string {
+  if (limitMinutes == null || limitMinutes <= 0) {
+    return formatSessionClock(elapsedMs, limitMinutes);
+  }
+  const remainingSeconds = Math.max(
+    0,
+    Math.ceil((limitMinutes * 60_000 - Math.max(0, elapsedMs)) / 1000),
+  );
+  const hours = Math.floor(remainingSeconds / 3600);
+  const minutes = Math.floor((remainingSeconds % 3600) / 60);
+  const seconds = remainingSeconds % 60;
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return hours > 0
+    ? `${hours}:${pad(minutes)}:${pad(seconds)}`
+    : `${pad(minutes)}:${pad(seconds)}`;
+}
+
 export function parseLimitMinutes(value: unknown): number | null {
   if (value == null || value === "") return null;
   const parsed = typeof value === "number" ? value : Number(value);

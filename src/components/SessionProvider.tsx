@@ -33,15 +33,23 @@ type PersistedSession = {
   elapsedMs: number;
   sourceElapsedMs: Record<string, number>;
   paused: boolean;
+  started: boolean;
+};
+
+export type SessionPlan = {
+  sessionLimitMinutes: number;
+  sourceLimits: { sourceKey: string; limitMinutes: number }[];
 };
 
 type SessionContextValue = {
   ready: boolean;
+  started: boolean;
   elapsedMs: number;
   paused: boolean;
   settings: AppSettings;
   cappedKeys: string[];
   applySettings: (settings: AppSettings) => void;
+  beginSession: (plan: SessionPlan) => Promise<void>;
   startNewSession: () => Promise<void>;
 };
 
@@ -59,6 +67,7 @@ function freshSession(): PersistedSession {
     elapsedMs: 0,
     sourceElapsedMs: {},
     paused: false,
+    started: false,
   };
 }
 
@@ -74,6 +83,11 @@ function readStored(): PersistedSession {
       elapsedMs: Math.max(0, parsed.elapsedMs),
       sourceElapsedMs: parsed.sourceElapsedMs ?? {},
       paused: Boolean(parsed.paused),
+      // Sessions stored before `started` existed were already running.
+      started:
+        typeof parsed.started === "boolean"
+          ? parsed.started
+          : parsed.elapsedMs > 0 || Boolean(parsed.paused),
     };
   } catch {
     return freshSession();
@@ -105,9 +119,11 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [elapsedMs, setElapsedMs] = useState(0);
   const [sourceElapsedMs, setSourceElapsedMs] = useState<Record<string, number>>({});
   const [paused, setPaused] = useState(false);
+  const [started, setStarted] = useState(false);
   const [settings, setSettings] = useState<AppSettings>(EMPTY_SETTINGS);
   const idRef = useRef("");
   const startedRef = useRef(0);
+  const hasStartedRef = useRef(false);
   const elapsedRef = useRef(0);
   const sourceRef = useRef<Record<string, number>>({});
   const pausedRef = useRef(false);
@@ -124,6 +140,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       elapsedMs: elapsedRef.current,
       sourceElapsedMs: sourceRef.current,
       paused: pausedRef.current,
+      started: hasStartedRef.current,
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
   }, []);
@@ -134,13 +151,15 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     elapsedRef.current = session.elapsedMs;
     sourceRef.current = session.sourceElapsedMs;
     pausedRef.current = session.paused;
+    hasStartedRef.current = session.started;
     setElapsedMs(session.elapsedMs);
     setSourceElapsedMs(session.sourceElapsedMs);
     setPaused(session.paused);
+    setStarted(session.started);
   }, []);
 
   const flush = useCallback(async () => {
-    if (flushingRef.current || !idRef.current) return;
+    if (flushingRef.current || !idRef.current || !hasStartedRef.current) return;
     const taken: {
       sourceKey: string;
       sourceLabel: string;
@@ -216,6 +235,26 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     persist();
   }, [applyStored, flush, persist]);
 
+  const beginSession = useCallback(
+    async (plan: SessionPlan) => {
+      const response = await fetch("/api/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(plan),
+      });
+      const body = (await response.json()) as AppSettings & { error?: string };
+      if (!response.ok) {
+        throw new Error(body.error || "The session could not be started");
+      }
+      applySettings(body);
+      startedRef.current = Date.now();
+      hasStartedRef.current = true;
+      setStarted(true);
+      persist();
+    },
+    [applySettings, persist],
+  );
+
   useEffect(() => {
     applyStored(readStored());
     setReady(true);
@@ -227,7 +266,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   }, [applySettings, applyStored]);
 
   useEffect(() => {
-    if (!ready) return;
+    if (!ready || !started) return;
     const capped = isSessionCapped(
       elapsedRef.current,
       settings.sessionLimitMinutes,
@@ -236,7 +275,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     pausedRef.current = capped;
     setPaused(capped);
     persist();
-  }, [elapsedMs, persist, ready, settings.sessionLimitMinutes]);
+  }, [elapsedMs, persist, ready, settings.sessionLimitMinutes, started]);
 
   useEffect(() => {
     if (!ready) return;
@@ -245,7 +284,13 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       const now = Date.now();
       const delta = Math.min(Math.max(0, now - last), 5000);
       last = now;
-      if (document.visibilityState !== "visible" || pausedRef.current) return;
+      if (
+        document.visibilityState !== "visible" ||
+        pausedRef.current ||
+        !hasStartedRef.current
+      ) {
+        return;
+      }
       const limit = settingsRef.current.sessionLimitMinutes;
       const limitMs = limit != null && limit > 0 ? limit * 60_000 : null;
       let added = delta;
@@ -309,21 +354,25 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo(
     () => ({
       ready,
+      started,
       elapsedMs,
       paused,
       settings,
       cappedKeys,
       applySettings,
+      beginSession,
       startNewSession,
     }),
     [
       applySettings,
+      beginSession,
       cappedKeys,
       elapsedMs,
       paused,
       ready,
       settings,
       startNewSession,
+      started,
     ],
   );
 

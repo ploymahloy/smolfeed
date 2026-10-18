@@ -349,6 +349,14 @@ export function listCategories(): Category[] {
   }));
 }
 
+export function updateFeedTitle(feedId: string, title: string): void {
+  getDb().prepare(`UPDATE feeds SET title = ? WHERE id = ? AND title <> ?`).run(
+    title,
+    feedId,
+    title,
+  );
+}
+
 export function createCategory(input: {
   name: string;
   kind: CategoryKind;

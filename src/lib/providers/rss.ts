@@ -1,5 +1,6 @@
 import { XMLParser } from "fast-xml-parser";
 import { categorySourceKey, type Category, type FetchBucket, type Post, type RssFeed } from "@/lib/types";
+import { updateFeedTitle } from "@/lib/db";
 import { clip, errorMessage, stripHtml, textOf } from "@/lib/text";
 import { fetchWithTimeout } from "@/lib/providers/http";
 
@@ -73,6 +74,15 @@ export async function fetchRss(feed: RssFeed, category: Category): Promise<Fetch
     const xml = await response.text();
     const parsed = itemsFrom(parser.parse(xml));
     const host = new URL(feed.url).hostname.replace(/^www\./, "");
+    // Remember the feed's own name so the UI can show it instead of the host.
+    const channelTitle = parsed.title.trim().slice(0, 120);
+    if (channelTitle) {
+      try {
+        updateFeedTitle(feed.id, channelTitle);
+      } catch {
+        // A failed title write must not break reading the feed.
+      }
+    }
     const posts: Post[] = parsed.entries.slice(0, 12).map((entry, index) => {
       const title = textOf(entry.title);
       const summary = stripHtml(
